@@ -7,6 +7,7 @@ const { get: getSkill }             = require('./src/skills/skillRegistry');
 const { resolve: resolveKnowledge } = require('./src/knowledge/knowledgeResolver');
 const { build: buildPrompt }        = require('./src/prompts/promptBuilder');
 const { complete }                  = require('./src/llm/llmClient');
+const { callWithFallback }          = require('./src/llm/fallbackClient');
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'hunters-ai-engine', version: '1.0.0' });
@@ -24,13 +25,34 @@ app.post('/execute', async (req, res) => {
   }
 
   try {
-    const skill      = await getSkill(skillName);
-    const sources    = buildKnowledgeSources(skillName, inputs, context);
-    const knowledge  = await resolveKnowledge(sources);
+    const skill     = await getSkill(skillName);
+    const sources   = buildKnowledgeSources(skillName, inputs, context);
+    const knowledge = await resolveKnowledge(sources);
+
+    // Check if knowledge was found
+    const knowledgeFound = knowledge.sources && knowledge.sources.some(s => s.found);
+
     const { systemPrompt, userPrompt } = buildPrompt({ skill, knowledge, context, inputs, examples: null });
-    const raw        = await complete({ systemPrompt, userPrompt, maxTokens: 2000 });
-    const cleaned    = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-    const data       = JSON.parse(cleaned);
+
+    // Phase 1 — knowledge-driven generation
+    const raw  = await complete({ systemPrompt, userPrompt, maxTokens: 2000 });
+    let data   = JSON.parse(raw);
+
+    // Phase 2 fallback — if no knowledge file, try external LLM and save result
+    if (!knowledgeFound) {
+      const fallbackData = await callWithFallback({
+        systemPrompt,
+        userPrompt,
+        inputs,
+        knowledgeFound
+      });
+      if (fallbackData) {
+        data = fallbackData;
+        console.log(`[execute] Used LLM fallback for "${inputs.title || skillName}"`);
+      } else {
+        console.log(`[execute] Phase 1 defaults used for "${inputs.title || skillName}"`);
+      }
+    }
 
     return res.json({ success: true, skill: skillName, data });
 

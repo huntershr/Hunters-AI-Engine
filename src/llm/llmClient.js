@@ -21,6 +21,7 @@ function parseKnowledgeBlock(userPrompt) {
     responsibilities: extractBullets(block, 'Responsibilities'),
     competencies:     extractBullets(block, 'Competencies') || extractBullets(block, 'Skills'),
     qualifications:   extractSection(block, 'Qualifications') || extractSection(block, 'Requirements') || '',
+    guidelinesSkills: extractGuidelinesSkills(block),
   };
 }
 
@@ -74,6 +75,33 @@ function extractBullets(text, heading) {
     .split('\n')
     .map(l => l.replace(/^[-•*]\s*/, '').trim())
     .filter(l => l.length > 10);
+}
+
+// Extracts skill vocabulary from guidelines files (which use `Use "Skill Name"` syntax).
+// Skips reference/lookup sections (Types, Standards, Certifications) — those are not required skills.
+// JD knowledge files never use this syntax, so false positives are impossible.
+function extractGuidelinesSkills(block) {
+  if (!block) return [];
+  const SKIP   = /\b(types|standards|certifications)\b/i;
+  const seen   = new Set();
+  const result = [];
+
+  const sectionRe = /##\s+([^\n]+)\n([\s\S]*?)(?=\n##\s|$)/gi;
+  let sec;
+  while ((sec = sectionRe.exec(block)) !== null) {
+    if (SKIP.test(sec[1])) continue;
+
+    const useRe = /\bUse\s+"([^"]+)"/gi;
+    let u;
+    while ((u = useRe.exec(sec[2])) !== null) {
+      const skill = u[1].trim();
+      if (skill.length > 2 && !seen.has(skill.toLowerCase())) {
+        seen.add(skill.toLowerCase());
+        result.push(skill);
+      }
+    }
+  }
+  return result;
 }
 
 function extractField(text, fieldName) {
@@ -132,7 +160,9 @@ function generateJobPost(k, inp) {
 
   const skills = inp.skills && inp.skills.length > 0
     ? inp.skills
-    : defaultSkills(title, industry);
+    : k.guidelinesSkills && k.guidelinesSkills.length > 0
+      ? k.guidelinesSkills.slice(0, 8)
+      : defaultSkills(title, industry);
 
   // Competencies — from knowledge or defaults
   let competencies = [...(k.competencies || [])];

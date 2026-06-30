@@ -72,16 +72,38 @@ app.post('/execute', async (req, res) => {
   }
 });
 
+// Maps industry labels (after slug normalisation) to guidelines filenames
+const GUIDELINES_MAP = {
+  'education':               'skills-education',
+  'finance':                 'skills-finance-accounting',
+  'finance-accounting':      'skills-finance-accounting',
+  'finance-&-accounting':    'skills-finance-accounting',
+  'engineering':             'skills-engineering',
+  'construction':            'skills-engineering',
+  'procurement':             'skills-procurement',
+  'purchasing':              'skills-procurement',
+  'purchasing-procurement':  'skills-procurement',
+  'business-development':    'skills-business-development',
+  'customer-service':        'skills-customer-service',
+  'real-estate':             'skills-real-estate',
+};
+
 // Maps skill + inputs → knowledge sources
-// V1: generate-job-post uses jobs/{industry}/{role}
+// V1: generate-job-post uses jobs/{industry}/{role} + optional guidelines/{industry}
 // Future skills: add their source resolution here
 function buildKnowledgeSources(skillName, inputs, context) {
   if (skillName === 'generate-job-post') {
     const industry = (inputs.industry || context.industry || '').toLowerCase().replace(/\//g, '-').replace(/\s+/g, '-');
     const role     = inputs.title || '';
+    const sources  = [];
     if (industry && role) {
-      return [{ domain: 'jobs', subdomain: industry, role }];
+      sources.push({ domain: 'jobs', subdomain: industry, role });
     }
+    const guidelinesFile = GUIDELINES_MAP[industry] || null;
+    if (guidelinesFile) {
+      sources.push({ domain: 'guidelines', role: guidelinesFile });
+    }
+    return sources;
   }
   return [];
 }

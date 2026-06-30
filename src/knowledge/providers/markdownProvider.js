@@ -138,6 +138,19 @@ function normalizeRole(title) {
 
 async function get(source) {
   const { domain, subdomain, role } = source;
+
+  // Guidelines files: direct lookup by exact filename, no role normalization, no fallback
+  if (domain === 'guidelines') {
+    const filePath = path.join(__dirname, '../../../knowledge/guidelines', `${role}.md`);
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      return { content, metadata: { path: filePath, found: true } };
+    } catch {
+      console.warn(`[KnowledgeProvider] Guidelines not found: ${filePath}`);
+      return { content: '', metadata: { path: filePath, found: false } };
+    }
+  }
+
   const normalized = normalizeRole(role);
   const filePath   = path.join(__dirname, '../../../knowledge', domain, subdomain, `${normalized}.md`);
 

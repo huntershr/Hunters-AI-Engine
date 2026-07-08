@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const app = express();
 app.use(express.json());
@@ -88,18 +90,64 @@ const GUIDELINES_MAP = {
   'real-estate':             'skills-real-estate',
 };
 
+// Education sub-industries ("British School", "American School", ...) live under
+// knowledge/jobs/education/{branch}/ rather than their own top-level jobs folder.
+const EDUCATION_BRANCH_MAP = {
+  'british school':           'british',
+  'american school':          'american',
+  'ib school':                'ib',
+  'cambridge school':         'cambridge',
+  'egyptian national school': 'egyptian',
+};
+
+// Mirrors the role keys/aliases in src/knowledge/providers/markdownProvider.js ROLE_MAP,
+// scoped to the roles that have curriculum-branch variants, so branch-file existence
+// checks here resolve to the same filename markdownProvider will read.
+const EDUCATION_BRANCH_ROLE_SLUGS = {
+  'teacher': 'teacher', 'subject teacher': 'teacher',
+  'hod': 'hod', 'head of department': 'hod',
+  'homeroom teacher': 'homeroom-teacher', 'homeroom': 'homeroom-teacher',
+  'teaching assistant': 'teaching-assistant', 'ta': 'teaching-assistant',
+  'floating teacher': 'floating-teacher',
+  'stage principal': 'stage-principal',
+  'assistant stage principal': 'assistant-stage-principal',
+  'ks headmistress': 'ks-headmistress', 'key stage headmistress': 'ks-headmistress',
+};
+
+function normalizeEducationBranchRole(title) {
+  const key = (title || '').toLowerCase().trim();
+  if (EDUCATION_BRANCH_ROLE_SLUGS[key]) return EDUCATION_BRANCH_ROLE_SLUGS[key];
+  for (const [k, v] of Object.entries(EDUCATION_BRANCH_ROLE_SLUGS)) {
+    if (key.includes(k) || k.includes(key)) return v;
+  }
+  return key.replace(/\s+/g, '-');
+}
+
 // Maps skill + inputs → knowledge sources
 // V1: generate-job-post uses jobs/{industry}/{role} + optional guidelines/{industry}
 // Future skills: add their source resolution here
 function buildKnowledgeSources(skillName, inputs, context) {
   if (skillName === 'generate-job-post') {
-    const industry = (inputs.industry || context.industry || '').toLowerCase().replace(/\//g, '-').replace(/\s+/g, '-');
+    const industryRaw = inputs.industry || context.industry || '';
+    const industry     = industryRaw.toLowerCase().replace(/\//g, '-').replace(/\s+/g, '-');
     const role     = inputs.title || '';
     const sources  = [];
-    if (industry && role) {
+
+    const educationBranch = EDUCATION_BRANCH_MAP[industryRaw.toLowerCase().trim()];
+
+    if (educationBranch && role) {
+      // Try the curriculum-branch file first, fall back to the shared education file
+      // if this role has no branch-specific variant.
+      const roleSlug   = normalizeEducationBranchRole(role);
+      const branchFile = path.join(__dirname, 'knowledge', 'jobs', 'education', educationBranch, `${roleSlug}.md`);
+      const subdomain  = fs.existsSync(branchFile) ? `education/${educationBranch}` : 'education';
+      sources.push({ domain: 'jobs', subdomain, role });
+    } else if (industry && role) {
       sources.push({ domain: 'jobs', subdomain: industry, role });
     }
-    const guidelinesFile = GUIDELINES_MAP[industry] || null;
+
+    const guidelinesKey   = educationBranch ? 'education' : industry;
+    const guidelinesFile  = GUIDELINES_MAP[guidelinesKey] || null;
     if (guidelinesFile) {
       sources.push({ domain: 'guidelines', role: guidelinesFile });
     }

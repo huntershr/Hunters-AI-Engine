@@ -22,6 +22,8 @@ Generate a complete, professional job posting based on the provided role informa
 - If language is "ar": write entirely in Arabic.
 - If language is "both": write each section in English first, then the Arabic translation immediately below it.
 - If tone is specified in Context: apply it (formal, approachable, prestigious, etc.).
+- CURRICULUM ENFORCEMENT: When industry is British School / American School / IB School / Cambridge School / Egyptian National School, the matching curriculum skill (e.g. "British Curriculum") MUST appear first in requirements.skills and MUST be included in deal_breakers. Never generate a school sub-industry job post without the curriculum as a deal breaker skill.
+- Populate deal_breakers from any "Essential (Deal Breaker)" section in Knowledge; if Knowledge has no such section, leave deal_breakers empty.
 
 ## Rules
 - Never invent salary figures.
@@ -44,6 +46,7 @@ Return a single valid JSON object with this exact schema:
   },
   "competencies": ["string", "string"],
   "qualifications": "string",
+  "deal_breakers": ["string", "string"],
   "language": "en | ar | both"
 }
 No markdown fences. No explanation. No text before or after. Raw JSON only.

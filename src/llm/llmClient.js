@@ -21,6 +21,8 @@ function parseKnowledgeBlock(userPrompt) {
     responsibilities: extractBullets(block, 'Responsibilities'),
     competencies:     extractBullets(block, 'Competencies') || extractBullets(block, 'Skills'),
     qualifications:   extractSection(block, 'Qualifications') || extractSection(block, 'Requirements') || '',
+    requiredSkills:   extractBullets(block, 'Required Skills'),
+    dealBreakers:     extractBullets(block, 'Essential \\(Deal Breaker\\)'),
     guidelinesSkills: extractGuidelinesSkills(block),
   };
 }
@@ -158,11 +160,21 @@ function generateJobPost(k, inp) {
     ? inp.education
     : extractEducationFromQualifications(k.qualifications);
 
-  const skills = inp.skills && inp.skills.length > 0
+  let skills = inp.skills && inp.skills.length > 0
     ? inp.skills
-    : k.guidelinesSkills && k.guidelinesSkills.length > 0
-      ? k.guidelinesSkills.slice(0, 8)
-      : defaultSkills(title, industry);
+    : k.requiredSkills && k.requiredSkills.length > 0
+      ? k.requiredSkills
+      : k.guidelinesSkills && k.guidelinesSkills.length > 0
+        ? k.guidelinesSkills.slice(0, 8)
+        : defaultSkills(title, industry);
+
+  // Deal-breaker skills (from the knowledge file's "Essential (Deal Breaker)" section)
+  // must lead the skills list — they are non-negotiable requirements for the role.
+  const dealBreakers = k.dealBreakers || [];
+  if (dealBreakers.length > 0) {
+    const rest = skills.filter(s => !dealBreakers.some(d => d.toLowerCase() === s.toLowerCase()));
+    skills = [...dealBreakers, ...rest];
+  }
 
   // Competencies — from knowledge or defaults
   let competencies = [...(k.competencies || [])];
@@ -183,6 +195,7 @@ function generateJobPost(k, inp) {
     requirements: { experience, education, skills },
     competencies,
     qualifications,
+    deal_breakers: dealBreakers,
     language: lang,
   };
 }

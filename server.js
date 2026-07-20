@@ -39,8 +39,11 @@ app.post('/execute', async (req, res) => {
     const sources   = buildKnowledgeSources(skillName, inputs, context);
     const knowledge = await resolveKnowledge(sources);
 
-    // Check if knowledge was found
-    const knowledgeFound = knowledge.sources && knowledge.sources.some(s => s.found);
+    // Check if role-specific knowledge was found. A generic industry-wide
+    // guidelines file existing does not count — it's supplementary context,
+    // not a substitute for the role's own knowledge file, so it must not
+    // suppress the Gemini fallback when the role file itself is missing.
+    const knowledgeFound = knowledge.sources && knowledge.sources.some(s => s.domain === 'jobs' && s.found);
 
     const { systemPrompt, userPrompt } = buildPrompt({ skill, knowledge, context, inputs, examples: null });
 

@@ -4,6 +4,11 @@
 
 const { saveGeneratedKnowledge } = require('../knowledge/knowledgeSaver');
 
+// gemini-2.5-flash-lite shuts down ~Jul 22 2026; gemini-3.1-flash-lite has the
+// longest confirmed runway (shutdown May 7 2027) among current "lite" tier models.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite';
+console.log(`[FallbackClient] Active Gemini model: ${GEMINI_MODEL}`);
+
 async function callWithFallback({ systemPrompt, userPrompt, inputs, knowledgeFound }) {
   // Only trigger fallback if no knowledge file was found
   if (knowledgeFound) return null;
@@ -17,8 +22,7 @@ async function callWithFallback({ systemPrompt, userPrompt, inputs, knowledgeFou
   try {
     console.log(`[FallbackClient] No knowledge file found for "${inputs.title}" — calling Gemini`);
 
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-    const url   = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',

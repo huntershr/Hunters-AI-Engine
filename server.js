@@ -13,11 +13,12 @@ app.use((req, res, next) => {
   next();
 });
 
-const { get: getSkill }             = require('./src/skills/skillRegistry');
-const { resolve: resolveKnowledge } = require('./src/knowledge/knowledgeResolver');
-const { build: buildPrompt }        = require('./src/prompts/promptBuilder');
-const { complete }                  = require('./src/llm/llmClient');
-const { callWithFallback }          = require('./src/llm/fallbackClient');
+const { get: getSkill }                    = require('./src/skills/skillRegistry');
+const { resolve: resolveKnowledge }        = require('./src/knowledge/knowledgeResolver');
+const { build: buildPrompt, buildList }    = require('./src/prompts/promptBuilder');
+const { complete }                         = require('./src/llm/llmClient');
+const { callWithFallback, callDirect }     = require('./src/llm/fallbackClient');
+const { lookupMany, saveMany }             = require('./src/knowledge/keywordCache');
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'hunters-ai-engine', version: '1.0.0' });
@@ -35,7 +36,17 @@ app.post('/execute', async (req, res) => {
   }
 
   try {
-    const skill     = await getSkill(skillName);
+    const skill = await getSkill(skillName);
+
+    // LLM-direct skills have no knowledge base — skip Phase 1 entirely.
+    if (skill.type === 'llm-direct') {
+      if (skillName !== 'simplify-skills') {
+        throw new Error(`LLM_DIRECT_UNSUPPORTED: no handler for skill "${skillName}"`);
+      }
+      const data = await simplifySkillsToKeywords(skill, inputs, context);
+      return res.json({ success: true, skill: skillName, data });
+    }
+
     const sources   = buildKnowledgeSources(skillName, inputs, context);
     const knowledge = await resolveKnowledge(sources);
 
@@ -157,6 +168,44 @@ function buildKnowledgeSources(skillName, inputs, context) {
     return sources;
   }
   return [];
+}
+
+// simplify-skills: batch-reduce full-sentence skill phrases to short keywords.
+// Cache-hit phrases skip Gemini entirely; only cache-miss phrases are sent in the
+// (single) Gemini call, and results are merged back into their original positions.
+async function simplifySkillsToKeywords(skill, inputs, context) {
+  const phrases = Array.isArray(inputs.skills) ? inputs.skills : [];
+  if (phrases.length === 0) return [];
+
+  const cached = await lookupMany(phrases);
+  const misses = [];
+  phrases.forEach((phrase, index) => {
+    if (cached[index] === null) misses.push({ index, phrase });
+  });
+
+  if (misses.length === 0) {
+    console.log(`[simplify-skills] All ${phrases.length} phrase(s) served from cache — no Gemini call`);
+    return cached;
+  }
+
+  console.log(`[simplify-skills] ${misses.length}/${phrases.length} phrase(s) missing from cache — calling Gemini`);
+  const { systemPrompt, userPrompt } = buildList({ skill, context, items: misses.map(m => m.phrase) });
+  const generated = await callDirect({ systemPrompt, userPrompt });
+
+  if (!Array.isArray(generated) || generated.length !== misses.length) {
+    const got = Array.isArray(generated) ? generated.length : typeof generated;
+    throw new Error(`SIMPLIFY_SKILLS_MISMATCH: expected ${misses.length} keyword(s), got ${got}`);
+  }
+
+  const result   = [...cached];
+  const newPairs = [];
+  misses.forEach((m, i) => {
+    result[m.index] = generated[i];
+    newPairs.push({ phrase: m.phrase, keyword: generated[i] });
+  });
+
+  await saveMany(newPairs);
+  return result;
 }
 
 const PORT = process.env.PORT || 3001;

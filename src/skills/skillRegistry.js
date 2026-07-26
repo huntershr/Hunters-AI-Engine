@@ -13,7 +13,7 @@ async function get(skillName) {
   if (!sections.role && !sections.goal) {
     throw new Error(`SKILL_INVALID: ${skillName} — missing Role and Goal sections`);
   }
-  return { name: frontmatter.name || skillName, version: frontmatter.version || '1.0', ...sections };
+  return { name: frontmatter.name || skillName, version: frontmatter.version || '1.0', type: frontmatter.type || null, ...sections };
 }
 
 function parseFrontmatter(raw) {

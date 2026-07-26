@@ -29,6 +29,24 @@ function assembleUser({ knowledge, inputs, examples }) {
   return parts.join('\n\n');
 }
 
+// For llm-direct skills that take a plain array in and expect a positionally-aligned
+// array back (e.g. simplify-skills). formatInputs()'s comma-join is unsafe here — if any
+// item itself contains a comma, the model can't tell where one item ends and the next
+// begins, which breaks the "same order, same count" contract these skills rely on.
+function buildList({ skill, context = {}, items = [] }) {
+  return {
+    systemPrompt: assembleSystem({ skill, context }),
+    userPrompt:   assembleListUser({ items })
+  };
+}
+
+function assembleListUser({ items }) {
+  return [
+    `## Request\n${JSON.stringify(items)}`,
+    'Return ONLY a valid JSON array of strings, same length and order as the Request array. No markdown fences. No explanation. No text before or after.'
+  ].join('\n\n');
+}
+
 function formatContext(ctx) {
   return [
     ['Platform',        ctx.platform],
@@ -53,4 +71,4 @@ function formatInputs(inputs) {
   ].filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join('\n');
 }
 
-module.exports = { build };
+module.exports = { build, buildList };

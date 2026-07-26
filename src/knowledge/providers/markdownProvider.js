@@ -126,12 +126,24 @@ const ROLE_MAP = {
   'driver': 'driver',
 };
 
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Whole-phrase containment, not raw substring containment — "coordinator" must not
+// match the bare key "coo", and "assistant" must not match the bare key "ta". A match
+// only counts if `needle` appears in `haystack` bounded by word boundaries on both sides.
+function wordBoundaryIncludes(haystack, needle) {
+  if (!needle) return false;
+  return new RegExp(`\\b${escapeRegExp(needle)}\\b`).test(haystack);
+}
+
 function normalizeRole(title) {
   const key = title.toLowerCase().trim();
   if (ROLE_MAP[key]) return ROLE_MAP[key];
-  // Try partial match
+  // Try partial match — whole-phrase containment only, see wordBoundaryIncludes above.
   for (const [k, v] of Object.entries(ROLE_MAP)) {
-    if (key.includes(k) || k.includes(key)) return v;
+    if (wordBoundaryIncludes(key, k) || wordBoundaryIncludes(k, key)) return v;
   }
   return key.replace(/\s+/g, '-');
 }

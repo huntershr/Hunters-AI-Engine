@@ -124,6 +124,20 @@ const ROLE_MAP = {
   'general maintenance manager': 'general-maintenance-manager',
   'agricultural supervisor': 'agricultural-supervisor',
   'driver': 'driver',
+  'office manager': 'office-manager', 'office administrator': 'office-manager',
+  'hr generalist': 'hr-generalist', 'human resources generalist': 'hr-generalist',
+  'call center agent': 'call-center-agent', 'call centre agent': 'call-center-agent',
+  'contact center agent': 'call-center-agent',
+  'procurement specialist': 'procurement-specialist', 'procurement executive': 'procurement-specialist',
+  // Finance
+  'financial analyst': 'financial-analyst', 'finance analyst': 'financial-analyst',
+  // Education
+  'academic coordinator': 'academic-coordinator', 'academic affairs coordinator': 'academic-coordinator',
+  // Marketing
+  'digital marketing specialist': 'digital-marketing-specialist',
+  'digital marketing executive': 'digital-marketing-specialist', 'digital marketer': 'digital-marketing-specialist',
+  // Construction
+  'mep engineer': 'mep-engineer', 'mechanical electrical plumbing engineer': 'mep-engineer',
 };
 
 function escapeRegExp(str) {

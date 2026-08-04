@@ -17,7 +17,7 @@ function parseKnowledgeBlock(userPrompt) {
   const block = extractTopLevelSection(userPrompt, 'Knowledge');
   if (!block) return {};
   return {
-    summary:          extractSection(block, 'Summary')        || '',
+    summary:          extractSection(block, 'Summary') || extractSection(block, 'Job Brief') || '',
     responsibilities: extractBullets(block, 'Responsibilities'),
     competencies:     extractBullets(block, 'Competencies') || extractBullets(block, 'Skills'),
     qualifications:   extractSection(block, 'Qualifications') || extractSection(block, 'Requirements') || '',

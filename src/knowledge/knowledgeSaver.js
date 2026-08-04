@@ -3,11 +3,12 @@
 
 const fs   = require('fs').promises;
 const path = require('path');
+const { normalizeIndustry } = require('./normalizeIndustry');
 
 async function saveGeneratedKnowledge(industry, role, data) {
   try {
     const normalized = normalizeForPath(role);
-    const dir        = path.join(__dirname, '../../knowledge/jobs', industry.toLowerCase().replace(/\//g, '-').replace(/\s+/g, '-'));
+    const dir        = path.join(__dirname, '../../knowledge/jobs', normalizeIndustry(industry));
     const filePath   = path.join(dir, `${normalized}.md`);
 
     // Don't overwrite existing hand-crafted knowledge files

@@ -15,6 +15,7 @@ app.use((req, res, next) => {
 
 const { get: getSkill }                    = require('./src/skills/skillRegistry');
 const { resolve: resolveKnowledge }        = require('./src/knowledge/knowledgeResolver');
+const { normalizeIndustry }                = require('./src/knowledge/normalizeIndustry');
 const { build: buildPrompt, buildList }    = require('./src/prompts/promptBuilder');
 const { complete }                         = require('./src/llm/llmClient');
 const { callWithFallback, callDirect }     = require('./src/llm/fallbackClient');
@@ -93,7 +94,6 @@ const GUIDELINES_MAP = {
   'education':               'skills-education',
   'finance':                 'skills-finance-accounting',
   'finance-accounting':      'skills-finance-accounting',
-  'finance-&-accounting':    'skills-finance-accounting',
   'engineering':             'skills-engineering',
   'construction':            'skills-engineering',
   'procurement':             'skills-procurement',
@@ -143,7 +143,7 @@ function normalizeEducationBranchRole(title) {
 function buildKnowledgeSources(skillName, inputs, context) {
   if (skillName === 'generate-job-post') {
     const industryRaw = inputs.industry || context.industry || '';
-    const industry     = industryRaw.toLowerCase().replace(/\//g, '-').replace(/\s+/g, '-');
+    const industry     = normalizeIndustry(industryRaw);
     const role     = inputs.title || '';
     const sources  = [];
 

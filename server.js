@@ -85,6 +85,7 @@ app.post('/execute', async (req, res) => {
     console.error(`[execute] skill=${skillName} error=${err.message}`);
     if (err.message.startsWith('SKILL_NOT_FOUND'))    return res.status(404).json({ success: false, error: err.message });
     if (err.message.startsWith('LLM_NOT_CONFIGURED')) return res.status(503).json({ success: false, error: 'AI provider not configured' });
+    if (err.message.startsWith('LLM_UNAVAILABLE'))    return res.status(503).json({ success: false, error: 'AI provider busy, try again' });
     return res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -190,7 +191,7 @@ async function simplifySkillsToKeywords(skill, inputs, context) {
 
   console.log(`[simplify-skills] ${misses.length}/${phrases.length} phrase(s) missing from cache — calling Gemini`);
   const { systemPrompt, userPrompt } = buildList({ skill, context, items: misses.map(m => m.phrase) });
-  const generated = await callDirect({ systemPrompt, userPrompt });
+  const { data: generated, model, isPrimary } = await callDirect({ systemPrompt, userPrompt });
 
   if (!Array.isArray(generated) || generated.length !== misses.length) {
     const got = Array.isArray(generated) ? generated.length : typeof generated;
@@ -204,7 +205,14 @@ async function simplifySkillsToKeywords(skill, inputs, context) {
     newPairs.push({ phrase: m.phrase, keyword: generated[i] });
   });
 
-  await saveMany(newPairs);
+  // Cache-poisoning guard: a cached phrase is permanent, and fallback-model output has
+  // not been validated against the skill's rules (e.g. it may over-compress compound
+  // terms). Serve it to this caller, but only persist primary-model results.
+  if (isPrimary) {
+    await saveMany(newPairs);
+  } else {
+    console.warn(`[simplify-skills] Result came from fallback model ${model} — NOT cached`);
+  }
   return result;
 }
 

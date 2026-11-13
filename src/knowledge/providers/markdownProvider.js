@@ -13,6 +13,12 @@ const ROLE_MAP = {
   'science lab technician': 'science-lab-technician',
   'science laboratory technician': 'science-lab-technician',
   'homeroom teacher': 'homeroom-teacher', 'homeroom': 'homeroom-teacher',
+  'preschool english teacher': 'preschool-english-teacher',
+  'pre-school english teacher': 'preschool-english-teacher',
+  'kg english teacher': 'preschool-english-teacher',
+  'kindergarten english teacher': 'preschool-english-teacher',
+  'nursery english teacher': 'preschool-english-teacher',
+  'early years english teacher': 'preschool-english-teacher',
   'stage principal': 'stage-principal',
   'assistant stage principal': 'assistant-stage-principal',
   'school counselor': 'school-counselor', 'counselor': 'school-counselor',
@@ -154,10 +160,24 @@ function wordBoundaryIncludes(haystack, needle) {
 
 function normalizeRole(title) {
   const key = title.toLowerCase().trim();
+  // 1. Exact match.
   if (ROLE_MAP[key]) return ROLE_MAP[key];
-  // Try partial match — whole-phrase containment only, see wordBoundaryIncludes above.
-  for (const [k, v] of Object.entries(ROLE_MAP)) {
-    if (wordBoundaryIncludes(key, k) || wordBoundaryIncludes(k, key)) return v;
+
+  const entries = Object.entries(ROLE_MAP);
+
+  // 2. Longest map key contained in the title (whole-phrase, see wordBoundaryIncludes).
+  //    Longest wins so "preschool english teacher (kg1–kg2)" picks 'preschool english
+  //    teacher' rather than the shorter 'teacher'. Ties keep map order.
+  let best = null;
+  for (const [k, v] of entries) {
+    if (wordBoundaryIncludes(key, k) && (!best || k.length > best.k.length)) best = { k, v };
+  }
+  if (best) return best.v;
+
+  // 3. Title is itself a fragment of a longer map key (e.g. "hr" -> "hr manager").
+  //    Unchanged from the previous behaviour: first match in map order.
+  for (const [k, v] of entries) {
+    if (wordBoundaryIncludes(k, key)) return v;
   }
   return key.replace(/\s+/g, '-');
 }
@@ -197,4 +217,4 @@ async function get(source) {
   }
 }
 
-module.exports = { get };
+module.exports = { get, normalizeRole, ROLE_MAP };

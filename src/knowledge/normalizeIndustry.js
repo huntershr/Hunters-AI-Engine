@@ -5,7 +5,7 @@
 // the other), so any future change to this logic must only be made here.
 // Early-years labels that share the education knowledge folder (slugs, post-normalisation).
 const EDUCATION_ALIASES = new Set([
-  'preschool', 'pre-school', 'kindergarten', 'nursery', 'early-years', 'school',
+  'preschool', 'pre-school', 'kindergarten', 'nursery', 'early-years', 'school', 'international-school',
 ]);
 
 function normalizeIndustry(raw) {

@@ -19,6 +19,32 @@ const ROLE_MAP = {
   'kindergarten english teacher': 'preschool-english-teacher',
   'nursery english teacher': 'preschool-english-teacher',
   'early years english teacher': 'preschool-english-teacher',
+  'french preschool teacher': 'french-preschool-teacher',
+  'french pre-school teacher': 'french-preschool-teacher',
+  'french kg teacher': 'french-preschool-teacher',
+  'kindergarten french teacher': 'french-preschool-teacher',
+  'french kindergarten teacher': 'french-preschool-teacher',
+  'german preschool teacher': 'german-preschool-teacher',
+  'german pre-school teacher': 'german-preschool-teacher',
+  'german kg teacher': 'german-preschool-teacher',
+  'kindergarten german teacher': 'german-preschool-teacher',
+  'german kindergarten teacher': 'german-preschool-teacher',
+  'arabic teacher y7': 'arabic-teacher-y7',
+  'arabic teacher year 7': 'arabic-teacher-y7',
+  'year 7 arabic teacher': 'arabic-teacher-y7',
+  'arabic teacher': 'arabic-teacher-y7',
+  'مدرس لغة عربية': 'arabic-teacher-y7',
+  'مدرس اللغة العربية': 'arabic-teacher-y7',
+  'معلم لغة عربية': 'arabic-teacher-y7',
+  'english teacher y7': 'english-teacher-y7-british-curriculum',
+  'english teacher year 7': 'english-teacher-y7-british-curriculum',
+  'year 7 english teacher': 'english-teacher-y7-british-curriculum',
+  'ks3 english teacher': 'english-teacher-y7-british-curriculum',
+  'german head of department': 'german-head-of-department-international-school',
+  'head of german': 'german-head-of-department-international-school',
+  'head of german department': 'german-head-of-department-international-school',
+  'german department head': 'german-head-of-department-international-school',
+  'hod german': 'german-head-of-department-international-school',
   'stage principal': 'stage-principal',
   'assistant stage principal': 'assistant-stage-principal',
   'school counselor': 'school-counselor', 'counselor': 'school-counselor',
@@ -153,9 +179,11 @@ function escapeRegExp(str) {
 // Whole-phrase containment, not raw substring containment — "coordinator" must not
 // match the bare key "coo", and "assistant" must not match the bare key "ta". A match
 // only counts if `needle` appears in `haystack` bounded by word boundaries on both sides.
+// Boundaries are Unicode-aware (letters/digits/underscore in any script): plain \b treats
+// Arabic letters as non-word characters, so Arabic keys would never match inside a longer title.
 function wordBoundaryIncludes(haystack, needle) {
   if (!needle) return false;
-  return new RegExp(`\\b${escapeRegExp(needle)}\\b`).test(haystack);
+  return new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(needle)}(?![\\p{L}\\p{N}_])`, 'u').test(haystack);
 }
 
 function normalizeRole(title) {

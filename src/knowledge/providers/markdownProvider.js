@@ -307,16 +307,35 @@ async function get(source) {
     const content = await fs.readFile(filePath, 'utf-8');
     return { content, metadata: { path: filePath, found: true } };
   } catch {
-    // Try 'other' folder as cross-industry fallback
-    const fallbackPath = path.join(__dirname, '../../../knowledge', domain, 'other', `${normalized}.md`);
+    // The exact file is missing. Fallback order (an exact hit above is never affected):
+    //  1. parent folders of a nested subdomain ("education/british" -> "education"), so a branch
+    //     label without a branch-specific file still reaches the shared education file;
+    //  2. the 'other' folder (cross-industry);
+    //  3. every remaining top-level folder, for industry labels with no folder or no file for the role.
+    const root = path.join(__dirname, '../../../knowledge', domain);
+    const tried = new Set([subdomain]);
+    const order = [];
+    const parts = String(subdomain || '').split('/').filter(Boolean);
+    for (let i = parts.length - 1; i >= 1; i--) order.push(parts.slice(0, i).join('/'));
+    order.push('other');
+    let rest = [];
     try {
-      const content = await fs.readFile(fallbackPath, 'utf-8');
-      console.warn(`[KnowledgeProvider] Used cross-industry fallback: ${fallbackPath}`);
-      return { content, metadata: { path: fallbackPath, found: true } };
-    } catch {
-      console.warn(`[KnowledgeProvider] Not found: ${filePath}`);
-      return { content: '', metadata: { path: filePath, found: false } };
+      rest = (await fs.readdir(root, { withFileTypes: true })).filter(d => d.isDirectory()).map(d => d.name).sort();
+    } catch { /* no folder list: skip step 3 */ }
+    order.push(...rest);
+
+    for (const sub of order) {
+      if (tried.has(sub)) continue;
+      tried.add(sub);
+      const candidate = path.join(root, sub, `${normalized}.md`);
+      try {
+        const content = await fs.readFile(candidate, 'utf-8');
+        console.warn(`[KnowledgeProvider] Used cross-industry fallback: ${candidate}`);
+        return { content, metadata: { path: candidate, found: true } };
+      } catch { /* try next folder */ }
     }
+    console.warn(`[KnowledgeProvider] Not found: ${filePath}`);
+    return { content: '', metadata: { path: filePath, found: false } };
   }
 }
 

@@ -19,6 +19,107 @@ const ROLE_MAP = {
   'kindergarten english teacher': 'preschool-english-teacher',
   'nursery english teacher': 'preschool-english-teacher',
   'early years english teacher': 'preschool-english-teacher',
+  'french preschool teacher': 'french-preschool-teacher',
+  'french pre-school teacher': 'french-preschool-teacher',
+  'french kg teacher': 'french-preschool-teacher',
+  'kindergarten french teacher': 'french-preschool-teacher',
+  'french kindergarten teacher': 'french-preschool-teacher',
+  'german preschool teacher': 'german-preschool-teacher',
+  'german pre-school teacher': 'german-preschool-teacher',
+  'german kg teacher': 'german-preschool-teacher',
+  'kindergarten german teacher': 'german-preschool-teacher',
+  'german kindergarten teacher': 'german-preschool-teacher',
+  'arabic teacher y7': 'arabic-teacher-y7',
+  'arabic teacher year 7': 'arabic-teacher-y7',
+  'year 7 arabic teacher': 'arabic-teacher-y7',
+  'arabic teacher': 'arabic-teacher-y7',
+  'مدرس لغة عربية': 'arabic-teacher-y7',
+  'مدرس اللغة العربية': 'arabic-teacher-y7',
+  'معلم لغة عربية': 'arabic-teacher-y7',
+  'english teacher y7': 'english-teacher-y7-british-curriculum',
+  'english teacher year 7': 'english-teacher-y7-british-curriculum',
+  'year 7 english teacher': 'english-teacher-y7-british-curriculum',
+  'ks3 english teacher': 'english-teacher-y7-british-curriculum',
+  'german head of department': 'german-head-of-department-international-school',
+  'head of german': 'german-head-of-department-international-school',
+  'head of german department': 'german-head-of-department-international-school',
+  'german department head': 'german-head-of-department-international-school',
+  'hod german': 'german-head-of-department-international-school',
+  'german hod': 'german-head-of-department-international-school',
+  // Early Years titles -> existing preschool files (plain and parenthesised forms; keys are matched literally)
+  'english teacher early years': 'preschool-english-teacher',
+  'english teacher (early years)': 'preschool-english-teacher',
+  'english teacher (early years homeroom)': 'preschool-english-teacher',
+  'french teacher early years': 'french-preschool-teacher',
+  'french teacher (early years)': 'french-preschool-teacher',
+  'preschool french teacher': 'french-preschool-teacher',
+  'pre-school french teacher': 'french-preschool-teacher',
+  'kg french teacher': 'french-preschool-teacher',
+  'early years french teacher': 'french-preschool-teacher',
+  'german teacher early years': 'german-preschool-teacher',
+  'german teacher (early years)': 'german-preschool-teacher',
+  'preschool german teacher': 'german-preschool-teacher',
+  'pre-school german teacher': 'german-preschool-teacher',
+  'kg german teacher': 'german-preschool-teacher',
+  'early years german teacher': 'german-preschool-teacher',
+  // Arabic KS3 and English KS3 / Year 7 variants -> existing Y7 files
+  'arabic teacher ks3': 'arabic-teacher-y7',
+  'arabic teacher key stage 3': 'arabic-teacher-y7',
+  'english teacher ks3': 'english-teacher-y7-british-curriculum',
+  'english teacher ks 3': 'english-teacher-y7-british-curriculum',
+  'english teacher - ks3': 'english-teacher-y7-british-curriculum',
+  'english teacher - ks 3': 'english-teacher-y7-british-curriculum',
+  'english teacher - year 7': 'english-teacher-y7-british-curriculum',
+  // Titles that are the same role as an existing file
+  'head of admission': 'head-of-enrollment', 'head of admissions': 'head-of-enrollment',
+  'admission officer': 'admissions-officer',
+  'front desk officer': 'receptionist',
+  'hr director': 'head-of-hr', 'human resources director': 'head-of-hr', 'director of hr': 'head-of-hr',
+  'customer care': 'customer-service-representative', 'customer care manager': 'customer-service-manager',
+  // Primary / secondary English
+  'english teacher year 5': 'english-teacher-primary', 'english teacher - year 5': 'english-teacher-primary',
+  'english teacher y5': 'english-teacher-primary',
+  'english teacher year 3': 'english-teacher-primary', 'english teacher - year 3': 'english-teacher-primary',
+  'english teacher year 4': 'english-teacher-primary', 'english teacher - year 4': 'english-teacher-primary',
+  'english teacher year 6': 'english-teacher-primary', 'english teacher - year 6': 'english-teacher-primary',
+  'english teacher ks2': 'english-teacher-primary', 'english teacher - ks2': 'english-teacher-primary',
+  'english teacher - ks 2': 'english-teacher-primary',
+  'primary english teacher': 'english-teacher-primary', 'primary school english teacher': 'english-teacher-primary',
+  'english teacher high school': 'english-teacher-high-school', 'english teacher - high school': 'english-teacher-high-school',
+  'high school english teacher': 'english-teacher-high-school',
+  'reading teacher': 'reading-teacher',
+  // Subject teachers
+  'science teacher': 'science-teacher', 'science teachers': 'science-teacher',
+  'math teacher': 'math-teacher', 'maths teacher': 'math-teacher', 'mathematics teacher': 'math-teacher',
+  'ict teacher': 'ict-teacher', 'computing teacher': 'ict-teacher', 'computer science teacher': 'ict-teacher',
+  'humanities teacher': 'humanities-teacher', 'social studies teacher': 'humanities-teacher',
+  'german teacher': 'german-teacher',
+  'arabic teacher lower primary': 'arabic-teacher-lower-primary', 'arabic teacher - lower primary': 'arabic-teacher-lower-primary',
+  'arabic teacher primary': 'arabic-teacher-lower-primary', 'primary arabic teacher': 'arabic-teacher-lower-primary',
+  'arabic social studies teacher': 'arabic-social-studies-teacher', 'arabic ss teacher': 'arabic-social-studies-teacher',
+  'character building teacher': 'character-building-teacher', 'charcter building teacher': 'character-building-teacher',
+  // Early Years / homeroom / support roles
+  'eyfs co teacher': 'eyfs-co-teacher', 'eyfs co-teacher': 'eyfs-co-teacher',
+  'eyfs homeroom teacher': 'eyfs-homeroom-teacher',
+  'lower elementary homeroom teacher': 'lower-elementary-homeroom-teacher',
+  'ks admin assistant': 'ks-admin-assistant', 'key stage admin assistant': 'ks-admin-assistant',
+  'student management officer': 'student-management-officer',
+  'marketing & admission officer': 'marketing-admission-officer', 'marketing and admission officer': 'marketing-admission-officer',
+  'marketing admission officer': 'marketing-admission-officer', 'marketing & admissions officer': 'marketing-admission-officer',
+  // Heads of department
+  'head of arabic department': 'head-of-arabic-department', 'head of arabic': 'head-of-arabic-department',
+  'arabic head of department': 'head-of-arabic-department', 'arabic department head': 'head-of-arabic-department',
+  'arabic hod': 'head-of-arabic-department', 'arabic ss hod': 'head-of-arabic-department',
+  'arabic social studies hod': 'head-of-arabic-department',
+  'english head of department': 'english-head-of-department', 'head of english': 'english-head-of-department',
+  'head of english department': 'english-head-of-department', 'english department head': 'english-head-of-department',
+  'english hod': 'english-head-of-department',
+  'pe head of department': 'pe-head-of-department', 'head of pe': 'pe-head-of-department',
+  'head of physical education': 'pe-head-of-department', 'pe hod': 'pe-head-of-department',
+  // Technology
+  'technical pre-sales engineer': 'technical-pre-sales-engineer', 'technical pre sales engineer': 'technical-pre-sales-engineer',
+  'technical presales engineer': 'technical-pre-sales-engineer', 'pre-sales engineer': 'technical-pre-sales-engineer',
+  'pre sales engineer': 'technical-pre-sales-engineer', 'presales engineer': 'technical-pre-sales-engineer',
   'stage principal': 'stage-principal',
   'assistant stage principal': 'assistant-stage-principal',
   'school counselor': 'school-counselor', 'counselor': 'school-counselor',
@@ -153,9 +254,11 @@ function escapeRegExp(str) {
 // Whole-phrase containment, not raw substring containment — "coordinator" must not
 // match the bare key "coo", and "assistant" must not match the bare key "ta". A match
 // only counts if `needle` appears in `haystack` bounded by word boundaries on both sides.
+// Boundaries are Unicode-aware (letters/digits/underscore in any script): plain \b treats
+// Arabic letters as non-word characters, so Arabic keys would never match inside a longer title.
 function wordBoundaryIncludes(haystack, needle) {
   if (!needle) return false;
-  return new RegExp(`\\b${escapeRegExp(needle)}\\b`).test(haystack);
+  return new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(needle)}(?![\\p{L}\\p{N}_])`, 'u').test(haystack);
 }
 
 function normalizeRole(title) {
@@ -204,16 +307,35 @@ async function get(source) {
     const content = await fs.readFile(filePath, 'utf-8');
     return { content, metadata: { path: filePath, found: true } };
   } catch {
-    // Try 'other' folder as cross-industry fallback
-    const fallbackPath = path.join(__dirname, '../../../knowledge', domain, 'other', `${normalized}.md`);
+    // The exact file is missing. Fallback order (an exact hit above is never affected):
+    //  1. parent folders of a nested subdomain ("education/british" -> "education"), so a branch
+    //     label without a branch-specific file still reaches the shared education file;
+    //  2. the 'other' folder (cross-industry);
+    //  3. every remaining top-level folder, for industry labels with no folder or no file for the role.
+    const root = path.join(__dirname, '../../../knowledge', domain);
+    const tried = new Set([subdomain]);
+    const order = [];
+    const parts = String(subdomain || '').split('/').filter(Boolean);
+    for (let i = parts.length - 1; i >= 1; i--) order.push(parts.slice(0, i).join('/'));
+    order.push('other');
+    let rest = [];
     try {
-      const content = await fs.readFile(fallbackPath, 'utf-8');
-      console.warn(`[KnowledgeProvider] Used cross-industry fallback: ${fallbackPath}`);
-      return { content, metadata: { path: fallbackPath, found: true } };
-    } catch {
-      console.warn(`[KnowledgeProvider] Not found: ${filePath}`);
-      return { content: '', metadata: { path: filePath, found: false } };
+      rest = (await fs.readdir(root, { withFileTypes: true })).filter(d => d.isDirectory()).map(d => d.name).sort();
+    } catch { /* no folder list: skip step 3 */ }
+    order.push(...rest);
+
+    for (const sub of order) {
+      if (tried.has(sub)) continue;
+      tried.add(sub);
+      const candidate = path.join(root, sub, `${normalized}.md`);
+      try {
+        const content = await fs.readFile(candidate, 'utf-8');
+        console.warn(`[KnowledgeProvider] Used cross-industry fallback: ${candidate}`);
+        return { content, metadata: { path: candidate, found: true } };
+      } catch { /* try next folder */ }
     }
+    console.warn(`[KnowledgeProvider] Not found: ${filePath}`);
+    return { content: '', metadata: { path: filePath, found: false } };
   }
 }
 

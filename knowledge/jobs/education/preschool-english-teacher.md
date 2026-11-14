@@ -45,3 +45,6 @@ Teaches English to preschool children (about 3 to 6 years old) through play-base
 - TEFL, CELTA or an early-years qualification
 - Experience with a British or American curriculum
 - Classroom songs and storytelling skills
+
+## Keywords
+English, preschool, KG, KG1, KG2, nursery, early years, EYFS, phonics, play-based learning

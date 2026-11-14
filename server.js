@@ -79,7 +79,14 @@ app.post('/execute', async (req, res) => {
       }
     }
 
-    return res.json({ success: true, skill: skillName, data });
+    // Additive field (data is unchanged): which knowledge folder served the role file, so a mismatch is visible.
+    const jobSrc = (knowledge.sources || []).find(s => s.domain === 'jobs');
+    const knowledgeSource = jobSrc && jobSrc.found
+      ? { found: true, requested_folder: jobSrc.requestedFolder || null, source_folder: jobSrc.sourceFolder || null,
+          fallback: jobSrc.fallback || 'none', file: path.basename(jobSrc.path) }
+      : { found: false };
+    console.log(`[execute] knowledge_source ${JSON.stringify(knowledgeSource)} title="${inputs.title || ''}"`);
+    return res.json({ success: true, skill: skillName, data, knowledge_source: knowledgeSource });
 
   } catch (err) {
     console.error(`[execute] skill=${skillName} error=${err.message}`);

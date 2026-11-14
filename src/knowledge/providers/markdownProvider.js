@@ -285,6 +285,13 @@ function normalizeRole(title) {
   return key.replace(/\s+/g, '-');
 }
 
+// Exact normalised role key only: the title itself as a ROLE_MAP key, or its own slug. No contains / fragment matching.
+function exactRoleSlug(title) {
+  const key = String(title || '').toLowerCase().trim();
+  if (!key) return '';
+  return ROLE_MAP[key] || key.replace(/\s+/g, '-');
+}
+
 async function get(source) {
   const { domain, subdomain, role } = source;
 
@@ -305,7 +312,7 @@ async function get(source) {
 
   try {
     const content = await fs.readFile(filePath, 'utf-8');
-    return { content, metadata: { path: filePath, found: true } };
+    return { content, metadata: { path: filePath, found: true, requestedFolder: subdomain, sourceFolder: subdomain, fallback: 'none' } };
   } catch {
     // The exact file is missing. Fallback order (an exact hit above is never affected):
     //  1. parent folders of a nested subdomain ("education/british" -> "education"), so a branch
@@ -324,14 +331,22 @@ async function get(source) {
     } catch { /* no folder list: skip step 3 */ }
     order.push(...rest);
 
-    for (const sub of order) {
+    const crossStart = order.length - rest.length;   // entries before this index are parents and 'other'
+    const exact = exactRoleSlug(role);
+    for (let i = 0; i < order.length; i++) {
+      const sub = order[i];
       if (tried.has(sub)) continue;
       tried.add(sub);
-      const candidate = path.join(root, sub, `${normalized}.md`);
+      const crossIndustry = i >= crossStart;
+      // Step 3 serves a file from an unrelated industry, so only an exact role key may match there:
+      // never a partial / longest-match slug ("Marketing Specialist" must not become digital-marketing-specialist).
+      const slug = crossIndustry ? exact : normalized;
+      if (!slug) continue;
+      const candidate = path.join(root, sub, `${slug}.md`);
       try {
         const content = await fs.readFile(candidate, 'utf-8');
-        console.warn(`[KnowledgeProvider] Used cross-industry fallback: ${candidate}`);
-        return { content, metadata: { path: candidate, found: true } };
+        console.warn(`[KnowledgeProvider] Used ${crossIndustry ? 'cross-industry' : 'parent/other'} fallback: requested=${subdomain} source=${sub} file=${slug}.md`);
+        return { content, metadata: { path: candidate, found: true, requestedFolder: subdomain, sourceFolder: sub, fallback: crossIndustry ? 'cross-industry' : 'parent-or-other' } };
       } catch { /* try next folder */ }
     }
     console.warn(`[KnowledgeProvider] Not found: ${filePath}`);

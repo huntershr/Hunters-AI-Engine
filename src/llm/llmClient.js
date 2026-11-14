@@ -20,7 +20,7 @@ function parseKnowledgeBlock(userPrompt) {
     summary:          extractSection(block, 'Summary') || extractSection(block, 'Job Brief') || '',
     responsibilities: extractBullets(block, 'Responsibilities'),
     competencies:     extractBullets(block, 'Competencies') || extractBullets(block, 'Skills'),
-    qualifications:   extractSection(block, 'Qualifications') || extractSection(block, 'Requirements') || '',
+    qualifications:   extractSection(block, 'Required Qualifications') || extractSection(block, 'Qualifications') || extractSection(block, 'Requirements') || '',
     requiredSkills:   extractBullets(block, 'Required Skills'),
     dealBreakers:     extractBullets(block, 'Essential \\(Deal Breaker\\)'),
     guidelinesSkills: extractGuidelinesSkills(block),
@@ -185,7 +185,7 @@ function generateJobPost(k, inp) {
 
   // Qualifications
   const qualifications = k.qualifications && k.qualifications.length > 20
-    ? k.qualifications
+    ? qualificationsParagraph(k.qualifications)
     : `${education}. ${experience}. Strong communication and organizational skills required.`;
 
   return {
@@ -244,15 +244,39 @@ function defaultSkills(title, industry) {
   ];
 }
 
-function extractExperienceFromQualifications(qual) {
-  const match = qual.match(/(\d+)\+?\s*years?/i);
-  return match ? `Minimum ${match[1]} years of relevant experience` : 'Relevant professional experience required';
+// Qualification lines: CRLF-safe, bullet markers removed, blank lines dropped.
+function qualificationLines(qual) {
+  return String(qual || '').split(/\r?\n/).map(l => l.replace(/^\s*[-•*]\s*/, '').trim()).filter(Boolean);
 }
 
+// The qualifications field is a single paragraph in the output contract ("string"), so bullet lines
+// from a knowledge file are joined into one line instead of being passed through as a multi-line block.
+function qualificationsParagraph(qual) {
+  return qualificationLines(qual).map(l => l.replace(/[.;,\s]+$/, '')).join('. ') + '.';
+}
+
+const NUM_WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+// "3 years", "3-5 years", "3–5 years" (en dash), "3 to 5 years", "7+ years", "two years"
+const YEARS_RE = /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)(?:\s*(?:-|–|—|to)\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten))?\s*\+?\s*years?\b/i;
+const toNum = x => (/^\d+$/.test(x) ? parseInt(x, 10) : NUM_WORDS[x.toLowerCase()]);
+
+// Lower bound of a years requirement: "3-5 years" -> 3, "7+ years" -> 7, "at least 1 year" -> 1.
+// Lines that mention experience are preferred; otherwise the first line with a years figure.
+function extractExperienceFromQualifications(qual) {
+  const lines = qualificationLines(qual);
+  const line = lines.find(l => /experience/i.test(l) && YEARS_RE.test(l)) || lines.find(l => YEARS_RE.test(l));
+  const m = line && line.match(YEARS_RE);
+  if (!m) return 'Relevant professional experience required';
+  const n = toNum(m[1]);
+  return `Minimum ${n} ${n === 1 ? 'year' : 'years'} of relevant experience`;
+}
+
+// First line that names a degree, kept whole (commas and brackets included) up to a ";" or a ". ".
 function extractEducationFromQualifications(qual) {
-  if (!qual) return 'Relevant degree or qualification';
-  const match = qual.match(/(Bachelor|Master|PhD|Diploma|Degree)[^.;,]*/i);
-  return match ? match[0].trim() : 'Relevant degree or equivalent qualification';
+  const line = qualificationLines(qual).find(l => /\b(Bachelor|Master|PhD|Doctorate|Diploma|Degree)/i.test(l));
+  // A file with qualifications but no degree line (driver, cleaner...) must not claim a degree is required.
+  if (!line) return qual ? 'Relevant qualification or equivalent experience' : 'Relevant degree or qualification';
+  return line.split(/;|\.\s/)[0].replace(/[.\s]+$/, '').trim();
 }
 
 module.exports = { complete };

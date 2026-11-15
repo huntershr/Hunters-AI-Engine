@@ -245,7 +245,39 @@ const ROLE_MAP = {
   'digital marketing executive': 'digital-marketing-specialist', 'digital marketer': 'digital-marketing-specialist',
   // Construction
   'mep engineer': 'mep-engineer', 'mechanical electrical plumbing engineer': 'mep-engineer',
+  // Electro-mechanical must stay its own file now that "mechanical engineer" and "electrical engineer" are keys
+  // (otherwise the contained-key rule would send it to mechanical-engineer).
+  'electro mechanical engineer': 'electro-mechanical-engineer', 'mechanical electrical engineer': 'electro-mechanical-engineer',
+  'mechanical and electrical engineer': 'electro-mechanical-engineer', 'mechanical & electrical engineer': 'electro-mechanical-engineer',
+  'm&e engineer': 'electro-mechanical-engineer',
+  'project engineer': 'project-engineer', 'site project engineer': 'project-engineer', 'مهندس مشروع': 'project-engineer',
+  // Exact aliases agreed for Stage B
+  'software developer': 'software-engineer',
+  'marketing specialist': 'digital-marketing-specialist',   // placeholder until marketing-specialist.md exists (Marketing batch)
+  'social media marketing specialist': 'social-media-specialist',
+  'real estate sales manager': 'sales-manager',              // knowledge/jobs/real-estate/sales-manager.md
 };
+
+// Engineering families with Junior / mid / Senior files. Every level form is an explicit key: a bare "civil engineer"
+// key would otherwise capture "Senior Civil Engineer" through the contained-key rule, and a title that is a fragment of
+// a longer key would pick the first level key in map order.
+const LEVELED_FAMILIES = [
+  { slug: 'civil-engineer',      bases: ['civil engineer', 'civil site engineer', 'civil execution engineer'], ar: ['مهندس مدني'] },
+  { slug: 'electrical-engineer', bases: ['electrical engineer', 'electrical site engineer', 'electrical design engineer', 'electrical execution engineer'], ar: ['مهندس كهرباء'] },
+  { slug: 'mechanical-engineer', bases: ['mechanical engineer', 'mechanical site engineer', 'mechanical design engineer', 'mechanical execution engineer'], ar: ['مهندس ميكانيكا'] },
+];
+const LEVEL_PREFIXES = {
+  junior: ['junior', 'jr', 'jr.', 'assistant', 'graduate'],
+  senior: ['senior', 'sr', 'sr.', 'lead', 'principal'],
+};
+for (const { slug, bases, ar } of LEVELED_FAMILIES) {
+  for (const b of bases) {
+    ROLE_MAP[b] = slug;
+    for (const p of LEVEL_PREFIXES.junior) ROLE_MAP[`${p} ${b}`] = `junior-${slug}`;
+    for (const p of LEVEL_PREFIXES.senior) ROLE_MAP[`${p} ${b}`] = `senior-${slug}`;
+  }
+  for (const a of ar) ROLE_MAP[a] = slug;
+}
 
 function escapeRegExp(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

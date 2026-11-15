@@ -16,7 +16,14 @@ const EDU = [
   'german-teacher', 'arabic-social-studies-teacher', 'lower-elementary-homeroom-teacher', 'eyfs-homeroom-teacher',
   'reading-teacher', 'english-teacher-high-school', 'ict-teacher', 'humanities-teacher',
 ];
-const FILES = [...EDU.map(f => `education/${f}.md`), 'technology/technical-pre-sales-engineer.md'];
+const CONSTRUCTION = [
+  // Stage B, Engineering batch 1 (sub-batch 1)
+  'junior-civil-engineer', 'civil-engineer', 'senior-civil-engineer',
+  'junior-electrical-engineer', 'electrical-engineer', 'senior-electrical-engineer',
+  'junior-mechanical-engineer', 'mechanical-engineer', 'senior-mechanical-engineer',
+  'project-engineer',
+];
+const FILES = [...EDU.map(f => `education/${f}.md`), ...CONSTRUCTION.map(f => `construction/${f}.md`), 'technology/technical-pre-sales-engineer.md'];
 const ORDER = ['Job Brief', 'Key Responsibilities', 'Required Qualifications', 'Required Skills',
                'Core Competencies', 'Essential (Deal Breaker)', 'Nice to Have'];
 

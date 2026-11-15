@@ -83,10 +83,12 @@ test('the five labels with no folder still find an education file by its exact r
 
 // Guard: the cross-industry step (a folder unrelated to the requested one) accepts exact role keys only.
 test('cross-industry step never uses partial / longest-match slugs', async () => {
+  // "Marketing Specialist", "Real Estate Sales Manager" and "Software Developer" are now explicit ROLE_MAP keys (Stage B),
+  // so they are served as exact keys; see engineeringLevels.test.js. These titles have no exact key and must stay unserved.
   for (const [label, title] of [
-    ['Marketing & Communications', 'Marketing Specialist'],        // contained-key match -> digital-marketing-specialist
-    ['Sales & Business Development', 'Real Estate Sales Manager'], // contained-key match -> sales-manager
-    ['Engineering & Technical', 'Software Developer'],             // fragment match -> software-engineer
+    ['Marketing & Communications', 'Marketing Executive Trainee'],   // contains 'marketing' only
+    ['Sales & Business Development', 'Regional Sales Manager - Retail'], // contained key 'sales manager' is not an exact key
+    ['Engineering & Technical', 'Software Developer Intern'],        // contained key only
     ['Customer Service', 'Reading Teacher KS2'],
   ]) {
     const r = await served(normalizeIndustry(label), title);

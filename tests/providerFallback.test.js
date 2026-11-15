@@ -73,12 +73,51 @@ test('label folders without a role file search the other folders before giving u
   }
 });
 
-test('the five labels with no folder normalise to something and still find an education file', async () => {
+test('the five labels with no folder still find an education file by its exact role key', async () => {
   for (const l of LABELS) {
-    const r = await served(normalizeIndustry(l), 'Reading Teacher KS2');
+    const r = await served(normalizeIndustry(l), 'Reading Teacher');
     assert.equal(r.found, true, l);
     assert.equal(r.file, 'reading-teacher.md', l);
   }
+});
+
+// Guard: the cross-industry step (a folder unrelated to the requested one) accepts exact role keys only.
+test('cross-industry step never uses partial / longest-match slugs', async () => {
+  for (const [label, title] of [
+    ['Marketing & Communications', 'Marketing Specialist'],        // contained-key match -> digital-marketing-specialist
+    ['Sales & Business Development', 'Real Estate Sales Manager'], // contained-key match -> sales-manager
+    ['Engineering & Technical', 'Software Developer'],             // fragment match -> software-engineer
+    ['Customer Service', 'Reading Teacher KS2'],
+  ]) {
+    const r = await served(normalizeIndustry(label), title);
+    assert.equal(r.found, false, `${label} / ${title} must not be served from another industry`);
+  }
+});
+
+test('exact role keys are still served cross-industry, with the source folder in the metadata', async () => {
+  const res = await provider.get({ domain: 'jobs', subdomain: normalizeIndustry('Marketing & Communications'), role: 'Digital Marketing Specialist' });
+  assert.equal(res.metadata.found, true);
+  assert.equal(res.metadata.fallback, 'cross-industry');
+  assert.equal(res.metadata.requestedFolder, 'marketing-communications');
+  assert.equal(res.metadata.sourceFolder, 'marketing-advertising');
+});
+
+test('metadata reports where a file came from: exact, parent/other, or not found', async () => {
+  const exact = await provider.get({ domain: 'jobs', subdomain: 'education', role: 'Preschool English Teacher' });
+  assert.deepEqual([exact.metadata.fallback, exact.metadata.sourceFolder], ['none', 'education']);
+  const parent = await provider.get({ domain: 'jobs', subdomain: 'education/british', role: 'Math Teacher - Year 2' });
+  assert.deepEqual([parent.metadata.fallback, parent.metadata.sourceFolder], ['parent-or-other', 'education']);
+  const other = await provider.get({ domain: 'jobs', subdomain: 'human-resources', role: 'HR Director - Schools Group' });
+  assert.deepEqual([other.metadata.fallback, other.metadata.sourceFolder], ['parent-or-other', 'other']);
+  const none = await provider.get({ domain: 'jobs', subdomain: 'education', role: 'Zzz Unknown Role' });
+  assert.equal(none.metadata.found, false);
+});
+
+test('the resolver passes the source folder through to /execute', async () => {
+  const { resolve } = require('../src/knowledge/knowledgeResolver');
+  const out = await resolve([{ domain: 'jobs', subdomain: 'marketing-communications', role: 'Digital Marketing Specialist' }]);
+  assert.equal(out.sources[0].sourceFolder, 'marketing-advertising');
+  assert.equal(out.sources[0].fallback, 'cross-industry');
 });
 
 test('a role with no file anywhere is still reported as not found (Gemini fallback stays reachable)', async () => {

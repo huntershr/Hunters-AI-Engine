@@ -6,7 +6,9 @@ async function resolve(sources) {
   const results = await Promise.all(
     sources.map(async (source) => {
       const result = await markdownProvider.get(source);
-      return { domain: source.domain, path: result.metadata.path, content: result.content, found: result.metadata.found };
+      const m = result.metadata;
+      return { domain: source.domain, path: m.path, content: result.content, found: m.found,
+               requestedFolder: m.requestedFolder, sourceFolder: m.sourceFolder, fallback: m.fallback };
     })
   );
 
